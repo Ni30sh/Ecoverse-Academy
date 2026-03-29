@@ -1,0 +1,477 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Warm Jungle Theme */
+    --background: 36 33% 93%;
+    --foreground: 153 45% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 153 45% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 153 45% 15%;
+
+    --primary: 153 35% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 153 45% 15%;
+    --secondary-foreground: 36 33% 93%;
+
+    --muted: 36 20% 90%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 140 49% 90%;
+    --accent-foreground: 153 45% 15%;
+
+    --destructive: 15 70% 47%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 153 15% 82%;
+    --input: 153 15% 82%;
+    --ring: 153 35% 48%;
+
+    --radius: 1.25rem;
+
+    /* Extended Warm Jungle Palette */
+    --jungle-deep: 153 45% 15%;
+    --jungle-mid: 153 40% 30%;
+    --jungle-bright: 153 35% 48%;
+    --jungle-light: 153 35% 60%;
+    --jungle-pale: 140 49% 90%;
+
+    --sun-gold: 26 88% 67%;
+    --sky-blue: 193 72% 59%;
+    --coral: 15 70% 47%;
+    --lavender: 261 95% 70%;
+    --earth-warm: 20 50% 38%;
+
+    --bg-elevated: 36 50% 96%;
+    --bg-dark-panel: 140 30% 13%;
+
+    --shadow-card: 0 2px 12px rgba(27,67,50,0.08), 0 1px 3px rgba(27,67,50,0.05);
+    --shadow-hover: 0 8px 30px rgba(27,67,50,0.15), 0 2px 8px rgba(27,67,50,0.1);
+    --shadow-float: 0 20px 60px rgba(27,67,50,0.2);
+
+    --sidebar-background: 140 30% 13%;
+    --sidebar-foreground: 36 33% 93%;
+    --sidebar-primary: 153 35% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 153 35% 20%;
+    --sidebar-accent-foreground: 153 35% 48%;
+    --sidebar-border: 153 20% 22%;
+    --sidebar-ring: 153 35% 48%;
+  }
+
+  .eco {
+    --background: 36 33% 93%;
+    --foreground: 153 45% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 153 45% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 153 45% 15%;
+    --primary: 153 35% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 153 45% 15%;
+    --secondary-foreground: 36 33% 93%;
+    --muted: 36 20% 90%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 140 49% 90%;
+    --accent-foreground: 153 45% 15%;
+    --destructive: 15 70% 47%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 153 15% 82%;
+    --input: 153 15% 82%;
+    --ring: 153 35% 48%;
+    --jungle-deep: 153 45% 15%;
+    --jungle-mid: 153 40% 30%;
+    --jungle-bright: 153 35% 48%;
+    --jungle-light: 153 35% 60%;
+    --jungle-pale: 140 49% 90%;
+    --sun-gold: 26 88% 67%;
+    --sky-blue: 193 72% 59%;
+    --coral: 15 70% 47%;
+    --lavender: 261 95% 70%;
+    --earth-warm: 20 50% 38%;
+    --bg-elevated: 36 50% 96%;
+    --bg-dark-panel: 140 30% 13%;
+    --shadow-card: 0 2px 12px rgba(27,67,50,0.08), 0 1px 3px rgba(27,67,50,0.05);
+    --shadow-hover: 0 8px 30px rgba(27,67,50,0.15), 0 2px 8px rgba(27,67,50,0.1);
+    --shadow-float: 0 20px 60px rgba(27,67,50,0.2);
+  }
+
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 220 15% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 18%;
+    --primary: 158 45% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 25% 96%;
+    --secondary-foreground: 220 15% 25%;
+    --muted: 210 20% 95%;
+    --muted-foreground: 220 10% 42%;
+    --accent: 152 55% 92%;
+    --accent-foreground: 153 45% 18%;
+    --destructive: 7 70% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 158 45% 42%;
+    --jungle-deep: 158 45% 22%;
+    --jungle-mid: 158 38% 34%;
+    --jungle-bright: 158 45% 42%;
+    --jungle-light: 158 35% 56%;
+    --jungle-pale: 152 55% 92%;
+    --sun-gold: 28 92% 58%;
+    --sky-blue: 199 82% 56%;
+    --coral: 7 70% 48%;
+    --lavender: 260 75% 64%;
+    --earth-warm: 22 52% 40%;
+    --bg-elevated: 0 0% 100%;
+    --bg-dark-panel: 157 45% 20%;
+    --shadow-card: 0 2px 10px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+    --shadow-hover: 0 12px 28px rgba(15, 23, 42, 0.12), 0 3px 10px rgba(15, 23, 42, 0.08);
+    --shadow-float: 0 18px 40px rgba(15, 23, 42, 0.15);
+  }
+
+  .dark {
+    --background: 222 30% 10%;
+    --foreground: 214 30% 94%;
+    --card: 221 28% 15%;
+    --card-foreground: 214 30% 94%;
+    --popover: 221 28% 15%;
+    --popover-foreground: 214 30% 94%;
+    --primary: 155 52% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 221 20% 23%;
+    --secondary-foreground: 214 30% 94%;
+    --muted: 222 18% 21%;
+    --muted-foreground: 216 18% 72%;
+    --accent: 155 26% 24%;
+    --accent-foreground: 155 42% 86%;
+    --destructive: 7 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 221 18% 28%;
+    --input: 221 18% 28%;
+    --ring: 155 52% 56%;
+    --jungle-deep: 156 40% 80%;
+    --jungle-mid: 156 35% 66%;
+    --jungle-bright: 156 52% 56%;
+    --jungle-light: 156 42% 72%;
+    --jungle-pale: 155 26% 24%;
+    --sun-gold: 33 92% 66%;
+    --sky-blue: 201 86% 68%;
+    --coral: 8 80% 64%;
+    --lavender: 264 88% 76%;
+    --earth-warm: 26 68% 58%;
+    --bg-elevated: 221 24% 18%;
+    --bg-dark-panel: 223 34% 11%;
+    --shadow-card: 0 2px 12px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.25);
+    --shadow-hover: 0 10px 30px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.35);
+    --shadow-float: 0 20px 60px rgba(0,0,0,0.55);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3 {
+    @apply font-heading;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Cabinet Grotesk', 'Syne', sans-serif;
+  }
+  .font-heading {
+    font-family: 'Nunito', sans-serif;
+  }
+  .font-body {
+    font-family: 'DM Sans', sans-serif;
+  }
+  .font-mono-stat {
+    font-family: 'Syne Mono', 'Syne', monospace;
+  }
+  .font-label {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.6875rem;
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-hover {
+    box-shadow: var(--shadow-hover);
+  }
+  .shadow-float {
+    box-shadow: var(--shadow-float);
+  }
+
+  .bg-gradient-warm {
+    background:
+      radial-gradient(ellipse at 20% 50%, hsl(var(--jungle-pale) / 0.35) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(var(--bg-elevated) / 0.45) 0%, transparent 50%),
+      hsl(var(--background));
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
+}
+
+@keyframes flow {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes firefly-blink {
+  0%, 100% { opacity: 0; transform: translate(0, 0); }
+  40% { opacity: 1; }
+  70% { opacity: 0.6; transform: translate(4px, -6px); }
+}
+
+@keyframes breathing {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+@keyframes eco-raindrop {
+  0% { transform: translateY(0); opacity: 0.7; }
+  80% { transform: translateY(270px); opacity: 0.7; }
+  100% { transform: translateY(280px); opacity: 0; }
+}
+
+@keyframes dust-rise {
+  0% { transform: translateY(0); opacity: 0.5; }
+  100% { transform: translateY(-40px); opacity: 0; }
+}
+
+@keyframes leaf-sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+@keyframes tree-sway {
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
+}
+
+@keyframes cloud-drift {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(120px); }
+}
+
+@keyframes stream-flow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -40; }
+}
+
+@keyframes bird-fly {
+  0% { transform: translateX(-60px); }
+  100% { transform: translateX(860px); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes firefly-glow {
+  0%, 100% { opacity: 0; transform: translate(0,0); }
+  30% { opacity: 1; transform: translate(2px,-3px); }
+  70% { opacity: 0.6; transform: translate(-2px,2px); }
+}
+
+@keyframes aurora-wave {
+  0%, 100% { opacity: 0.1; transform: translateX(0); }
+  50% { opacity: 0.2; transform: translateX(20px); }
+}
+
+@keyframes leafDrift1 {
+  from { transform: translateY(-20px) rotate(0deg) translateX(0); opacity: 0.8; }
+  to { transform: translateY(300px) rotate(180deg) translateX(30px); opacity: 0; }
+}
+
+@keyframes leafDrift2 {
+  from { transform: translateY(-20px) rotate(0deg) translateX(0); opacity: 0.7; }
+  to { transform: translateY(300px) rotate(-150deg) translateX(-20px); opacity: 0; }
+}
+
+@keyframes cardGlow {
+  0%, 100% { box-shadow: 0 8px 32px rgba(27,67,50,0.3); }
+  50% { box-shadow: 0 8px 48px rgba(64,145,108,0.45), 0 0 0 1px rgba(116,198,157,0.2); }
+}
+
+@keyframes livePulse {
+  0% { box-shadow: 0 0 0 0 rgba(116,198,157,0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(116,198,157,0); }
+  100% { box-shadow: 0 0 0 0 rgba(116,198,157,0); }
+}
+
+@keyframes rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes growBar {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes notif-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+@keyframes flame-flicker {
+  0%, 100% { transform: scale(1) rotate(-2deg); }
+  50% { transform: scale(1.15) rotate(2deg); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-sway {
+  animation: sway 3s ease-in-out infinite;
+}
+
+.animate-flow {
+  animation: flow 8s linear infinite;
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+.animate-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 2.5s linear infinite;
+}
+
+.animate-bob {
+  animation: bob 2.5s ease-in-out infinite;
+}
+
+.animate-firefly {
+  animation: firefly-blink 2s ease-in-out infinite;
+}
+
+.animate-breathing {
+  animation: breathing 3s ease-in-out infinite;
+}
+
+.animate-raindrop {
+  animation: eco-raindrop 4s ease-in infinite;
+}
+
+.animate-dust-rise {
+  animation: dust-rise 5s ease-out infinite;
+}
+
+.animate-leaf-sway {
+  animation: leaf-sway 3s ease-in-out infinite;
+}
+
+.animate-tree-sway {
+  animation: tree-sway 4s ease-in-out infinite;
+}
+
+.animate-cloud-drift {
+  animation: cloud-drift 30s linear infinite;
+}
+
+.animate-stream-flow {
+  stroke-dasharray: 10 8;
+  animation: stream-flow 3s linear infinite;
+}
+
+.animate-bird-fly {
+  animation: bird-fly 12s linear infinite;
+}
+
+.animate-sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+.animate-firefly-glow {
+  animation: firefly-glow 2s ease-in-out infinite;
+}
+
+.animate-aurora {
+  animation: aurora-wave 6s ease-in-out infinite;
+}
+
+.animate-tree-glow {
+  animation: breathing 4s ease-in-out infinite;
+}
+
+.animate-rotate-slow {
+  animation: rotate-slow 8s linear infinite;
+}
+
+.animate-grow-bar {
+  animation: growBar 0.6s ease-out forwards;
+  transform-origin: bottom;
+}
+
+.animate-notif-pulse {
+  animation: notif-pulse 2s ease-in-out infinite;
+}
+
+.animate-flame-flicker {
+  animation: flame-flicker 1.5s ease-in-out infinite alternate;
+}
+
+.animate-leaf-drift-1 {
+  animation: leafDrift1 6s linear infinite;
+}
+
+.animate-leaf-drift-2 {
+  animation: leafDrift2 9s linear infinite;
+  animation-delay: 3s;
+}
+
+.animate-live-pulse {
+  animation: livePulse 2s ease-out infinite;
+}
+
+.animate-card-glow {
+  animation: cardGlow 4s ease-in-out infinite;
+}
