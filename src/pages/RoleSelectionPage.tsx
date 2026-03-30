@@ -37,7 +37,7 @@ export default function RoleSelectionPage() {
 		<div className="min-h-screen bg-gradient-warm px-6 py-10 lg:py-16">
 			<div className="mx-auto w-full max-w-5xl">
 				<div className="text-center">
-				<Link to="/dashboard" className="inline-block cursor-pointer transition-opacity hover:opacity-80">
+				<Link to="/" className="inline-block cursor-pointer transition-opacity hover:opacity-80">
 					<h1 className="font-display font-bold text-jungle-deep text-5xl leading-tight dark:text-slate-100">🌍 EcoQuest</h1>
 				</Link>
 					<p className="mt-4 text-2xl text-foreground/90">Choose your role to get started</p>
