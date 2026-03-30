@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { localStore } from '@/lib/localStore';
 import { awardStudentProgress } from '@/lib/progression';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 
@@ -10,12 +9,14 @@ export function useDashboardData() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const userId = user?.id;
-
-  const canUseSupabaseForUser = async (targetUserId: string) => {
-    const { data } = await supabase.auth.getSession();
-    const sessionUserId = data.session?.user?.id;
-    return !!sessionUserId && sessionUserId === targetUserId;
-  };
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('currentUser') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+  const currentSchoolName = (profile?.school_name || currentUser?.school_name || '').trim();
 
   // Rank: count users with more eco_points + 1
   const rankQuery = useQuery({
@@ -124,25 +125,11 @@ export function useDashboardData() {
     mutationFn: async (missionId: string) => {
       if (!userId) throw new Error('Not authenticated');
 
-      const shouldUseSupabase = await canUseSupabaseForUser(userId);
-      if (shouldUseSupabase) {
-        const { error } = await supabase
-          .from('mission_submissions')
-          .upsert(
-            {
-              user_id: userId,
-              mission_id: missionId,
-              status: 'in_progress',
-            },
-            { onConflict: 'user_id,mission_id' }
-          );
-        if (error) throw error;
-      }
-
       localStore.insert('mission_submissions', {
         user_id: userId,
         mission_id: missionId,
         status: 'in_progress',
+        school_name: currentSchoolName,
       });
     },
     onSuccess: () => {
@@ -167,22 +154,12 @@ export function useDashboardData() {
 
       const shouldAutoApprove = !mission.requires_teacher_approval;
 
-      const shouldUseSupabase = await canUseSupabaseForUser(userId);
-      if (shouldUseSupabase) {
-        const { error } = await supabase.rpc('submit_mission_proof', {
-          p_mission_id: submission.mission_id,
-          p_photo_url: photoUrl ?? null,
-          p_notes: notes ?? null,
-          p_location_coords: coords ?? null,
-        });
-        if (error) throw error;
-      }
-
       localStore.update('mission_submissions', submissionId, {
         status: shouldAutoApprove ? 'approved' : 'pending',
         photo_url: photoUrl,
         notes,
         location_coords: coords,
+        school_name: submission.school_name || currentSchoolName,
         submitted_at: new Date().toISOString(),
         reviewed_at: shouldAutoApprove ? new Date().toISOString() : null,
       });
@@ -194,6 +171,21 @@ export function useDashboardData() {
           title: `Mission completed! +${mission.eco_points_reward || 0} EcoPoints 🌿`,
           body: `Great work on "${mission.title}". Your reward was added instantly.`,
           type: 'mission',
+          target_role: 'student',
+          school_name: currentSchoolName,
+          message: `Mission completed: ${mission.title}`,
+          read: false,
+          is_read: false,
+        });
+      } else {
+        localStore.insert('notifications', {
+          type: 'student_activity',
+          target_role: 'teacher',
+          school_name: currentSchoolName,
+          message: '📩 Student submitted mission',
+          title: 'New mission submission',
+          body: `${profile?.full_name || 'A student'} submitted "${mission.title}" for review.`,
+          read: false,
           is_read: false,
         });
       }
@@ -255,7 +247,7 @@ export function useDashboardData() {
     if (!userId) return;
     const notifications = localStore.query('notifications', (n) => n.user_id === userId);
     notifications.forEach(n => {
-      localStore.update('notifications', n.id, { is_read: true });
+      localStore.update('notifications', n.id, { is_read: true, read: true });
     });
     queryClient.invalidateQueries({ queryKey: ['notifications'] });
   };

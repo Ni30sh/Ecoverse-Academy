@@ -68,7 +68,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const USERS_KEY = 'ecoquest_users';
+const USERS_MIRROR_KEY = 'users';
 const SESSION_KEY = 'ecoquest_auth';
+const CURRENT_USER_KEY = 'currentUser';
 const DEFAULT_ADMIN_EMAIL = 'admin1@gmail.com';
 const DEFAULT_ADMIN_PASSWORD = 'password';
 
@@ -107,6 +109,36 @@ function readUsers(): StoredUser[] {
 
 function writeUsers(users: StoredUser[]) {
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+function writeUsersMirror(users: StoredUser[]) {
+  const mirrorUsers = users.map((u) => ({
+    user_id: u.id,
+    role: u.role,
+    school_name: u.school_name,
+    email: u.email,
+    full_name: u.full_name,
+  }));
+  localStorage.setItem(USERS_MIRROR_KEY, JSON.stringify(mirrorUsers));
+}
+
+function setCurrentUser(stored: StoredUser | null) {
+  if (!stored) {
+    localStorage.removeItem(CURRENT_USER_KEY);
+    return;
+  }
+
+  localStorage.setItem(
+    CURRENT_USER_KEY,
+    JSON.stringify({
+      user_id: stored.id,
+      id: stored.id,
+      email: stored.email,
+      full_name: stored.full_name,
+      role: stored.role,
+      school_name: stored.school_name,
+    })
+  );
 }
 
 function toBase64(bytes: Uint8Array): string {
@@ -210,6 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null);
       setProfile(null);
       setRole(null);
+      setCurrentUser(null);
       return;
     }
 
@@ -220,6 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession({ user: nextUser, token: nextToken });
     setProfile(toProfile(stored));
     setRole(stored.role);
+    setCurrentUser(stored);
   };
 
   const refreshProfile = async () => {
@@ -252,6 +286,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           u.email.toLowerCase() === DEFAULT_ADMIN_EMAIL ? { ...u, role: 'admin' as const } : u
         );
         writeUsers(updated);
+        writeUsersMirror(updated);
+      } else {
+        writeUsersMirror(users);
       }
       return;
     }
@@ -269,6 +306,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     writeUsers([...users, seededAdmin]);
+    writeUsersMirror([...users, seededAdmin]);
   };
 
   useEffect(() => {
@@ -322,6 +360,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       writeUsers([...users, newUser]);
+      writeUsersMirror([...users, newUser]);
 
       // Sync to localStore immediately
       localStore.syncAuthUsers();
@@ -383,6 +422,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     users[index] = { ...users[index], role: newRole };
     writeUsers(users);
+    writeUsersMirror(users);
 
     if (user && user.id === userId) {
       applyStoredUser(users[index], session?.token);

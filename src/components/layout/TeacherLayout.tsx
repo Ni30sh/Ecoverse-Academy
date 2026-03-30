@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { localStore } from '@/lib/localStore';
 
 const TEACHER_NAV = [
   { path: '/teacher', icon: LayoutDashboard, label: 'Overview' },
@@ -24,27 +24,36 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const queryClient = useQueryClient();
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('currentUser') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+  const schoolName = (profile?.school_name || currentUser?.school_name || '').trim();
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ['teacher-notifications', profile?.id],
+    queryKey: ['teacher-notifications', schoolName],
     queryFn: async () => {
-      if (!profile) return [];
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', profile.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      return data ?? [];
+      if (!schoolName) return [];
+      const items = localStore.query(
+        'notifications',
+        (n) => n.target_role === 'teacher' && n.school_name === schoolName
+      );
+      return items
+        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+        .slice(0, 10);
     },
-    enabled: !!profile,
+    enabled: !!schoolName,
   });
 
-  const unread = notifications.filter(n => !n.is_read).length;
+  const unread = notifications.filter(n => !(n.is_read ?? n.read)).length;
 
   const markAllRead = async () => {
-    if (!profile) return;
-    await supabase.from('notifications').update({ is_read: true }).eq('user_id', profile.id);
+    notifications.forEach((n) => {
+      localStore.update('notifications', n.id, { is_read: true, read: true });
+    });
     queryClient.invalidateQueries({ queryKey: ['teacher-notifications'] });
   };
 
@@ -134,9 +143,9 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                     {notifications.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-4">No notifications yet 🌱</p>
                     ) : notifications.map(n => (
-                      <div key={n.id} className={`p-3 rounded-xl text-sm transition-colors ${n.is_read ? 'bg-muted/30' : 'bg-jungle-pale/50'}`}>
-                        <p className="font-bold text-foreground">{n.title}</p>
-                        <p className="text-muted-foreground text-xs mt-1">{n.body}</p>
+                      <div key={n.id} className={`p-3 rounded-xl text-sm transition-colors ${(n.is_read ?? n.read) ? 'bg-muted/30' : 'bg-jungle-pale/50'}`}>
+                        <p className="font-bold text-foreground">{n.title || 'Teacher alert'}</p>
+                        <p className="text-muted-foreground text-xs mt-1">{n.body || n.message}</p>
                       </div>
                     ))}
                   </div>

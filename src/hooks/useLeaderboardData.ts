@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { localStore } from '@/lib/localStore';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { getLevelForPoints } from '@/lib/types';
 
@@ -145,20 +144,19 @@ export function useLeaderboardData(
 
 export function useTeacherLeaderboardData(period: TimePeriod) {
   const { profile } = useAuth();
-  const schoolName = profile?.school_name ?? '';
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('currentUser') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+  const schoolName = (profile?.school_name || currentUser?.school_name || '').trim();
 
   return useQuery({
     queryKey: ['teacher-leaderboard', period, schoolName],
     queryFn: async () => {
-      const { data: roleRows, error: roleError } = await supabase
-        .from('user_roles')
-        .select('user_id, role')
-        .eq('role', 'student');
-
-      if (roleError) throw roleError;
-
-      const studentIds = (roleRows ?? []).map(r => r.user_id);
-      if (studentIds.length === 0) {
+      if (!schoolName) {
         return {
           entries: [],
           top3: [],
@@ -170,19 +168,10 @@ export function useTeacherLeaderboardData(period: TimePeriod) {
         };
       }
 
-      let studentsQuery = supabase
-        .from('profiles')
-        .select('id, full_name, eco_points, school_name')
-        .in('id', studentIds);
-
-      if (schoolName) {
-        studentsQuery = studentsQuery.eq('school_name', schoolName);
-      }
-
-      const { data: students, error: studentError } = await studentsQuery;
-      if (studentError) throw studentError;
-
-      const scopedStudents = students ?? [];
+      const scopedStudents = localStore.query(
+        'profiles',
+        (p) => p.role === 'student' && p.school_name === schoolName
+      );
       if (scopedStudents.length === 0) {
         return {
           entries: [],
@@ -196,13 +185,14 @@ export function useTeacherLeaderboardData(period: TimePeriod) {
       }
 
       const scopedStudentIds = scopedStudents.map(s => s.id);
-
-      const { data: submissions, error: submissionError } = await supabase
-        .from('mission_submissions')
-        .select('user_id, status, submitted_at')
-        .in('user_id', scopedStudentIds);
-
-      if (submissionError) throw submissionError;
+      const isScopedSubmission = (sub: any) => {
+        if (sub.school_name) return sub.school_name === schoolName;
+        return scopedStudentIds.includes(sub.user_id);
+      };
+      const submissions = localStore.query(
+        'mission_submissions',
+        (s) => scopedStudentIds.includes(s.user_id) && isScopedSubmission(s)
+      );
 
       const submissionsByStudent = new Map<string, number>();
       (submissions ?? []).forEach((sub) => {
@@ -216,13 +206,10 @@ export function useTeacherLeaderboardData(period: TimePeriod) {
         pointsForPeriod = new Map(scopedStudents.map(s => [s.id, s.eco_points ?? 0]));
       } else {
         const startDate = period === 'this_week' ? getStartOfWeek() : getStartOfMonth();
-        const { data: periodPoints, error: periodError } = await supabase
-          .from('daily_points')
-          .select('user_id, date, points_earned')
-          .in('user_id', scopedStudentIds)
-          .gte('date', startDate);
-
-        if (periodError) throw periodError;
+        const periodPoints = localStore.query(
+          'daily_points',
+          (d) => scopedStudentIds.includes(d.user_id) && d.date >= startDate
+        );
 
         (periodPoints ?? []).forEach((row) => {
           pointsForPeriod.set(row.user_id, (pointsForPeriod.get(row.user_id) ?? 0) + (row.points_earned ?? 0));
@@ -256,13 +243,10 @@ export function useTeacherLeaderboardData(period: TimePeriod) {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
       const weekStart = sevenDaysAgo.toISOString().split('T')[0];
-      const { data: weeklyRows, error: weeklyError } = await supabase
-        .from('daily_points')
-        .select('date, points_earned, user_id')
-        .in('user_id', scopedStudentIds)
-        .gte('date', weekStart);
-
-      if (weeklyError) throw weeklyError;
+      const weeklyRows = localStore.query(
+        'daily_points',
+        (d) => scopedStudentIds.includes(d.user_id) && d.date >= weekStart
+      );
 
       const byDate: Record<string, number> = {};
       (weeklyRows ?? []).forEach((row) => {
@@ -312,6 +296,6 @@ export function useTeacherLeaderboardData(period: TimePeriod) {
         },
       };
     },
-    enabled: !!schoolName,
+    enabled: true,
   });
 }

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { localStore } from '@/lib/localStore';
 import { awardStudentProgress } from '@/lib/progression';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 
@@ -10,42 +9,49 @@ export function useTeacherData() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const userId = user?.id;
-  const schoolName = profile?.school_name;
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('currentUser') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+  const schoolName = (profile?.school_name || currentUser?.school_name || '').trim();
 
-  const canUseSupabaseForTeacher = async () => {
-    const { data } = await supabase.auth.getSession();
-    const sessionUserId = data.session?.user?.id;
-    return !!sessionUserId && sessionUserId === userId;
+  const getSubmissionSchoolName = (submission: any) => {
+    if (submission?.school_name) return submission.school_name;
+    const submissionProfile = localStore.getById('profiles', submission?.user_id);
+    return submissionProfile?.school_name || '';
   };
 
-  // All students (same school or all if no school set)
+  // All students (strictly same school)
   const studentsQuery = useQuery({
     queryKey: ['teacher-students', schoolName],
     queryFn: async () => {
       let profiles = localStore.getAll('profiles');
-      if (schoolName) {
-        profiles = profiles.filter(p => p.school_name === schoolName);
-      }
+      profiles = profiles.filter(p => p.school_name === schoolName);
       return profiles
-        .filter(p => p.id !== userId)
+        .filter(p => p.id !== userId && p.role === 'student')
         .sort((a, b) => b.eco_points - a.eco_points);
     },
-    enabled: !!userId,
+    enabled: !!userId && !!schoolName,
   });
 
   // All submissions (for teacher review)
   const submissionsQuery = useQuery({
-    queryKey: ['teacher-submissions'],
+    queryKey: ['teacher-submissions', schoolName],
     queryFn: async () => {
       const submissions = localStore.getAll('mission_submissions');
       return submissions
+        .filter(s => getSubmissionSchoolName(s) === schoolName)
         .map(s => ({
           ...s,
+          school_name: getSubmissionSchoolName(s),
           missions: localStore.getById('missions', s.mission_id)
         }))
         .sort((a, b) => new Date(b.submitted_at || 0).getTime() - new Date(a.submitted_at || 0).getTime());
     },
-    enabled: !!userId,
+    enabled: !!userId && !!schoolName,
   });
 
   // Pending count
@@ -53,17 +59,17 @@ export function useTeacherData() {
 
   // Weekly approved count
   const weeklyApprovedQuery = useQuery({
-    queryKey: ['teacher-weekly-approved'],
+    queryKey: ['teacher-weekly-approved', schoolName],
     queryFn: async () => {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const limitDate = sevenDaysAgo.toISOString();
       const submissions = localStore.query('mission_submissions',
-        (s) => s.status === 'approved' && s.submitted_at >= limitDate
+        (s) => s.status === 'approved' && s.submitted_at >= limitDate && getSubmissionSchoolName(s) === schoolName
       );
       return submissions.length;
     },
-    enabled: !!userId,
+    enabled: !!userId && !!schoolName,
   });
 
   // Class total eco points
@@ -71,26 +77,36 @@ export function useTeacherData() {
 
   // Active students this week
   const activeThisWeekQuery = useQuery({
-    queryKey: ['teacher-active-week'],
+    queryKey: ['teacher-active-week', schoolName],
     queryFn: async () => {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const limitDate = sevenDaysAgo.toISOString().split('T')[0];
-      const points = localStore.query('daily_points', (d) => d.date >= limitDate);
+      const schoolStudentIds = new Set(
+        localStore
+          .query('profiles', (p) => p.school_name === schoolName)
+          .map((p) => p.id)
+      );
+      const points = localStore.query('daily_points', (d) => d.date >= limitDate && schoolStudentIds.has(d.user_id));
       const uniqueUsers = new Set(points.map(d => d.user_id));
       return uniqueUsers.size;
     },
-    enabled: !!userId,
+    enabled: !!userId && !!schoolName,
   });
 
   // Class daily points for chart (last 7 days)
   const classWeeklyQuery = useQuery({
-    queryKey: ['teacher-class-weekly'],
+    queryKey: ['teacher-class-weekly', schoolName],
     queryFn: async () => {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
       const limitDate = sevenDaysAgo.toISOString().split('T')[0];
-      const points = localStore.query('daily_points', (d) => d.date >= limitDate);
+      const schoolStudentIds = new Set(
+        localStore
+          .query('profiles', (p) => p.school_name === schoolName)
+          .map((p) => p.id)
+      );
+      const points = localStore.query('daily_points', (d) => d.date >= limitDate && schoolStudentIds.has(d.user_id));
       
       const byDate: Record<string, number> = {};
       points.forEach(d => {
@@ -107,17 +123,22 @@ export function useTeacherData() {
       }
       return result;
     },
-    enabled: !!userId,
+    enabled: !!userId && !!schoolName,
   });
 
   // Top 5 students this week
   const topStudentsWeekQuery = useQuery({
-    queryKey: ['teacher-top-students-week'],
+    queryKey: ['teacher-top-students-week', schoolName],
     queryFn: async () => {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const limitDate = sevenDaysAgo.toISOString().split('T')[0];
-      const points = localStore.query('daily_points', (d) => d.date >= limitDate);
+      const schoolStudentIds = new Set(
+        localStore
+          .query('profiles', (p) => p.school_name === schoolName)
+          .map((p) => p.id)
+      );
+      const points = localStore.query('daily_points', (d) => d.date >= limitDate && schoolStudentIds.has(d.user_id));
       
       const byUser: Record<string, number> = {};
       points.forEach(d => {
@@ -140,7 +161,7 @@ export function useTeacherData() {
         };
       });
     },
-    enabled: !!userId,
+    enabled: !!userId && !!schoolName,
   });
 
   // Approve submission
@@ -148,6 +169,7 @@ export function useTeacherData() {
     mutationFn: async ({ submissionId, missionId, studentId, feedback }: { submissionId: string; missionId: string; studentId: string; feedback?: string }) => {
       const submission = localStore.getById('mission_submissions', submissionId);
       if (!submission) throw new Error('Submission not found');
+      if (getSubmissionSchoolName(submission) !== schoolName) throw new Error('Submission is from another school');
 
       const mission = localStore.getById('missions', missionId);
       if (!mission) throw new Error('Mission not found');
@@ -159,16 +181,6 @@ export function useTeacherData() {
           points: 0,
           alreadyApproved: true,
         };
-      }
-
-      const shouldUseSupabase = await canUseSupabaseForTeacher();
-      if (shouldUseSupabase) {
-        const { error } = await supabase.rpc('approve_mission_submission', {
-          p_user_id: studentId,
-          p_mission_id: missionId,
-          p_feedback: feedback ?? null,
-        });
-        if (error) throw error;
       }
 
       localStore.update('mission_submissions', submissionId, {
@@ -188,6 +200,10 @@ export function useTeacherData() {
         title: `Mission approved! +${mission.eco_points_reward} EcoPoints 🌿`,
         body: `Your mission "${mission.title}" was approved by ${profile?.full_name ?? 'your teacher'}.${feedback ? ` Feedback: ${feedback}` : ''}`,
         type: 'mission',
+        target_role: 'student',
+        school_name: schoolName,
+        message: `Mission approved: ${mission.title}`,
+        read: false,
         is_read: false,
       });
 
@@ -234,6 +250,10 @@ export function useTeacherData() {
         title: 'Mission needs revision',
         body: `${reason}${feedback ? `. ${feedback}` : ''}. Try again! 💪`,
         type: 'mission',
+        target_role: 'student',
+        school_name: schoolName,
+        message: 'Mission needs revision',
+        read: false,
         is_read: false,
       });
     },
@@ -269,6 +289,10 @@ export function useTeacherData() {
         title: `You received ${points} bonus EcoPoints! 🎉`,
         body: `From ${profile?.full_name ?? 'your teacher'}. Reason: ${reason}`,
         type: 'reward',
+        target_role: 'student',
+        school_name: schoolName,
+        message: `Bonus points awarded: ${points}`,
+        read: false,
         is_read: false,
       });
 
@@ -327,16 +351,16 @@ export function useTeacherData() {
 
   // Student submission counts per mission
   const missionCompletionQuery = useQuery({
-    queryKey: ['teacher-mission-completions'],
+    queryKey: ['teacher-mission-completions', schoolName],
     queryFn: async () => {
-      const submissions = localStore.query('mission_submissions', (s) => s.status === 'approved');
+      const submissions = localStore.query('mission_submissions', (s) => s.status === 'approved' && getSubmissionSchoolName(s) === schoolName);
       const counts: Record<string, number> = {};
       submissions.forEach(d => {
         counts[d.mission_id] = (counts[d.mission_id] || 0) + 1;
       });
       return counts;
     },
-    enabled: !!userId,
+    enabled: !!userId && !!schoolName,
   });
 
   return {
